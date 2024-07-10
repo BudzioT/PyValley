@@ -3,6 +3,7 @@ from pygame.math import Vector2 as Vector
 
 from src.utilities import utilities
 from src.settings import settings
+from src.timer import Timer
 
 
 class Player(pygame.sprite.Sprite):
@@ -34,14 +35,42 @@ class Player(pygame.sprite.Sprite):
         # Set his position
         self.pos = Vector(self.rect.center)
 
+        # List of available tools
+        self.tools = ["axe", "hoe", "water"]
+        # List of available seeds
+        self.seeds = ["corn", "tomato"]
+
+        # Current tool's index
+        self.tool_index = 0
+        # Seed one
+        self.seed_index = 0
+
+        # Current player's tool
+        self.tool = self.tools[self.tool_index]
+        # Current seed
+        self.seed = self.seeds[self.seed_index]
+
+        # Timers
+        self.timers = {
+            "tool": Timer(500, self._use_tool),
+            "switch_tool": Timer(400),
+            "seed": Timer(500, self._use_seed),
+            "switch_seed": Timer(400)
+        }
+
     def update(self, delta_time):
         """Update the player"""
+        # Update timers
+        self._update_timers()
+
         # Handle input
         self._handle_input()
 
         # Let the player move
         self._move(delta_time)
 
+        # Set the player's state
+        self._set_state()
         # Animate him
         self._animate(delta_time)
 
@@ -50,31 +79,65 @@ class Player(pygame.sprite.Sprite):
         # Get the keys pressed
         keys = pygame.key.get_pressed()
 
-        # If player wants to move left, set his direction to the left
-        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            self.direction.x = -1
-            # Set the player's state to walking left
-            self.state = "left"
-        # Handle right movement and set the correct state
-        elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            self.direction.x = 1
-            self.state = "right"
-        # If player isn't pressing any horizontal keys, stay in place horizontally
-        else:
-            self.direction.x = 0
+        # If player isn't using a tool, allow for input
+        if not self.timers["tool"].active:
+            # If player wants to move left, set his direction to the left
+            if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+                self.direction.x = -1
+                # Set the player's state to walking left
+                self.state = "left"
+            # Handle right movement and set the correct state
+            elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+                self.direction.x = 1
+                self.state = "right"
+            # If player isn't pressing any horizontal keys, stay in place horizontally
+            else:
+                self.direction.x = 0
 
-        # If user's presses up, change his direction to up
-        if keys[pygame.K_UP] or keys[pygame.K_w]:
-            self.direction.y = -1
-            # Set his state
-            self.state = "up"
-        # Handle down movement and state accordingly
-        elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
-            self.direction.y = 1
-            self.state = "down"
-        # If there isn't any vertical movement, make the player stay in place vertically
-        else:
-            self.direction.y = 0
+            # If user's presses up, change his direction to up
+            if keys[pygame.K_UP] or keys[pygame.K_w]:
+                self.direction.y = -1
+                # Set his state
+                self.state = "up"
+            # Handle down movement and state accordingly
+            elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
+                self.direction.y = 1
+                self.state = "down"
+            # If there isn't any vertical movement, make the player stay in place vertically
+            else:
+                self.direction.y = 0
+
+            # When user's pressing SPACE or K or X, use a tool
+            if keys[pygame.K_SPACE] or keys[pygame.K_k] or keys[pygame.K_x]:
+                # Activate the tool timer
+                self.timers["tool"].start()
+
+                # Stop the movement
+                self.direction = Vector()
+                # Reset the animation frame
+                self.frame = 0
+
+            # If the switch tool cooldown passed, allow switching tools
+            if not self.timers["switch_tool"].active:
+                # Change the tool forwards with E button
+                if keys[pygame.K_e]:
+                    self._change_tool(1)
+                    # Activate the timer
+                    self.timers["switch_tool"].start()
+
+                # Change the tool backwards with Q button
+                if keys[pygame.K_q]:
+                    self._change_tool(-1)
+                    # Start the switch cooldown
+                    self.timers["switch_tool"].start()
+
+            # If there isn't seed changing cooldown active, allow switching seeds
+            if not self.timers["switch_seed"].active:
+                # Change the seed with Left CTRL button
+                if keys[pygame.K_LCTRL]:
+                    self._change_seed(1)
+                    # Start the seed switch cooldown
+                    self.timers["switch_seed"].start()
 
     def _move(self, delta_time):
         """Move the player in given direction"""
@@ -91,6 +154,47 @@ class Player(pygame.sprite.Sprite):
         # Move the player vertically
         self.pos.y += self.direction.y * self.speed * delta_time
         self.rect.centery = self.pos.y
+
+    def _update_timers(self):
+        """Update all the player's timers"""
+        # Go through all the timers and update them
+        for timer in self.timers.values():
+            timer.update()
+
+    def _set_state(self):
+        """Set the player's state"""
+        # If player isn't moving (his direction's vector length is equal to 0)
+        if self.direction.magnitude() == 0:
+            # Set the state to current direction idle one
+            self.state = self.state.split('_')[0] + "_idle"
+
+        # If tool is being use (the tool timer's active)
+        if self.timers["tool"].active:
+            # Set the state to the given tool usage
+            self.state = self.state.split('_')[0] + '_' + self.tool
+
+    def _use_tool(self):
+        """Use a selected tool"""
+        pass
+
+    def _use_seed(self):
+        """Use currently selected seed"""
+        pass
+
+    def _change_tool(self, amount):
+        """Change the tool index by the given amount"""
+        # Change the tool index
+        self.tool_index += amount
+
+        # Make sure it's not too high, if it is, go back to index 0
+        if self.tool_index >= len(self.tools):
+            self.tool_index = 0
+        # Also make sure it's not too low, if so, change it to the maximum index
+        if self.tool_index < 0:
+            self.tool_index = len(self.tools) - 1
+
+        # Switch the tool
+        self.tool = self.tools[self.tool_index]
 
     def _animate(self, delta_time):
         """Animate the player"""
