@@ -1,9 +1,12 @@
+from os.path import join as path_join
+
 import pygame
+from pytmx.util_pygame import load_pygame
 
 from src.player import Player
 from src.ui import UI
 from src.groups import CameraGroup
-from src.sprites import Sprite
+from src.sprites import Sprite, Water, Flower, Tree
 from src.utilities import utilities
 from src.settings import settings
 
@@ -38,7 +41,7 @@ class Level:
         self.surface.fill("gray")
 
         # Draw all the sprites
-        self.sprites.custom_draw()
+        self.sprites.custom_draw(self.player)
 
         # Draw the user's interface
         self.ui.display()
@@ -50,8 +53,45 @@ class Level:
 
     def _initialize(self):
         """Initialize and set up the entire level"""
-        # Create the player
-        self.player = Player((640, 360), self.sprites)
-
         # Create ground
         Sprite((0, 0), utilities.load("../graphics/world/ground.png"), self.sprites, settings.DEPTHS["ground"])
+
+        # Load tmx map data
+        map_data = load_pygame(path_join(settings.BASE_PATH, "../data/map.tmx"))
+
+        # BUILD A HOUSE
+        # Go through each layer of bottom of the house
+        for layer in ["HouseFloor", "HouseFurnitureBottom"]:
+            # Check where are these layers placed
+            for pos_x, pos_y, surface in map_data.get_layer_by_name(layer).tiles():
+                # Place them in the game
+                Sprite((pos_x * settings.TILE_SIZE, pos_y * settings.TILE_SIZE), surface, self.sprites,
+                       settings.DEPTHS["house_bottom"])
+        # Go through each top layer of house
+        for layer in ["HouseWalls", "HouseFurnitureTop"]:
+            # Check placement of layers
+            for pos_x, pos_y, surface in map_data.get_layer_by_name(layer).tiles():
+                # Place the objects
+                Sprite((pos_x * settings.TILE_SIZE, pos_y * settings.TILE_SIZE), surface, self.sprites)
+
+        # Build fences
+        for pos_x, pos_y, surface in map_data.get_layer_by_name("Fence").tiles():
+            # Place the fences
+            Sprite((pos_x * settings.TILE_SIZE, pos_y * settings.TILE_SIZE), surface, self.sprites)
+
+        # Get the frames of water animation
+        water_frames = utilities.load_folder("../graphics/water")
+        # Place water
+        for pos_x, pos_y, surface in map_data.get_layer_by_name("Water").tiles():
+            Water((pos_x * settings.TILE_SIZE, pos_y * settings.TILE_SIZE), water_frames, self.sprites)
+
+        # Create trees
+        for tree in map_data.get_layer_by_name("Trees"):
+            Tree((tree.x, tree.y), tree.image, self.sprites, tree.name)
+
+        # Create flowers
+        for flower in map_data.get_layer_by_name("Decoration"):
+            Flower((flower.x, flower.y), flower.image, self.sprites)
+
+        # Create the player
+        self.player = Player((640, 360), self.sprites)

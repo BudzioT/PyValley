@@ -26,6 +26,8 @@ class Player(pygame.sprite.Sprite):
 
         # Get his rectangle, center him around given position
         self.rect = self.image.get_rect(center=pos)
+        # Player's hitboxes
+        self.hitbox = self.rect.copy().inflate((-125, -70))
 
         # Player's speed
         self.speed = 200
@@ -150,12 +152,15 @@ class Player(pygame.sprite.Sprite):
 
         # Set a new horizontal position
         self.pos.x += self.direction.x * self.speed * delta_time
+        # Move the hitbox with the position
+        self.hitbox.centerx = round(self.pos.x)
         # Update player's horizontal rectangle position
-        self.rect.centerx = self.pos.x
+        self.rect.centerx = self.hitbox.centerx
 
         # Move the player vertically
         self.pos.y += self.direction.y * self.speed * delta_time
-        self.rect.centery = self.pos.y
+        self.hitbox.centery = round(self.pos.y)
+        self.rect.centery = self.hitbox.centery
 
     def _update_timers(self):
         """Update all the player's timers"""
