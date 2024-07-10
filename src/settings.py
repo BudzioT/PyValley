@@ -18,6 +18,27 @@ class Settings:
         # File's base path
         self.BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
+        # User's interface icon positions
+        self.ICON_POSITIONS = {
+            "tool": (40, self.SCREEN_HEIGHT - 15),
+            "seed": (90, self.SCREEN_HEIGHT)
+        }
+
+        # Depth of layers
+        self.DEPTHS = {
+            "water": 0,
+            "ground": 1,
+            "soil": 2,
+            "soil_water": 3,
+            "rain_floor": 4,
+            "house_bottom": 5,
+            "plant": 6,
+            "main": 7,
+            "house_top": 8,
+            "fruit": 9,
+            "rain_drops": 10
+        }
+
 
 # Instantiate settings
 settings = Settings()

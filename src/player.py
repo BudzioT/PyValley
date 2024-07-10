@@ -34,6 +34,8 @@ class Player(pygame.sprite.Sprite):
         self.direction = Vector()
         # Set his position
         self.pos = Vector(self.rect.center)
+        # Depth position of the player
+        self.pos_z = settings.DEPTHS["main"]
 
         # List of available tools
         self.tools = ["axe", "hoe", "water"]
@@ -195,6 +197,18 @@ class Player(pygame.sprite.Sprite):
 
         # Switch the tool
         self.tool = self.tools[self.tool_index]
+
+    def _change_seed(self, amount):
+        """Change the current seed by the given amount"""
+        # Set the index
+        self.seed_index += amount
+
+        # Loop it around if needed
+        if self.seed_index >= len(self.seeds):
+            self.seed_index = 0
+
+        # Switch the seed
+        self.seed = self.seeds[self.seed_index]
 
     def _animate(self, delta_time):
         """Animate the player"""

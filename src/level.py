@@ -1,6 +1,11 @@
 import pygame
 
 from src.player import Player
+from src.ui import UI
+from src.groups import CameraGroup
+from src.sprites import Sprite
+from src.utilities import utilities
+from src.settings import settings
 
 
 class Level:
@@ -11,10 +16,13 @@ class Level:
         self.surface = pygame.display.get_surface()
 
         # Group of all sprites
-        self.sprites = pygame.sprite.Group()
+        self.sprites = CameraGroup()
 
         # Set up the level
         self._initialize()
+
+        # Game's user's interface
+        self.ui = UI(self.player)
 
     def run(self, delta_time):
         """Run the level"""
@@ -30,7 +38,10 @@ class Level:
         self.surface.fill("gray")
 
         # Draw all the sprites
-        self.sprites.draw(self.surface)
+        self.sprites.custom_draw()
+
+        # Draw the user's interface
+        self.ui.display()
 
     def _update_positions(self, delta_time):
         """Update positions of level's elements"""
@@ -39,4 +50,8 @@ class Level:
 
     def _initialize(self):
         """Initialize and set up the entire level"""
+        # Create the player
         self.player = Player((640, 360), self.sprites)
+
+        # Create ground
+        Sprite((0, 0), utilities.load("../graphics/world/ground.png"), self.sprites, settings.DEPTHS["ground"])

@@ -13,6 +13,10 @@ class Utilities:
         # Save the absolute base file path
         self.BASE_PATH = settings.BASE_PATH
 
+    def load(self, path):
+        """Load the given image"""
+        return pygame.image.load(path_join(self.BASE_PATH, path)).convert_alpha()
+
     def load_folder(self, path):
         """Load an entire folder from the given path"""
         surfaces = []
