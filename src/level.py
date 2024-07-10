@@ -22,6 +22,8 @@ class Level:
         self.sprites = CameraGroup()
         # Sprites that have collisions
         self.collision_sprites = pygame.sprite.Group()
+        # Tree sprites
+        self.tree_sprites = pygame.sprite.Group()
 
         # Set up the level
         self._initialize()
@@ -52,6 +54,10 @@ class Level:
         """Update positions of level's elements"""
         # Update all sprites
         self.sprites.update(delta_time)
+
+    def _obtain_item(self, item):
+        """Obtain one more of the given item"""
+        self.player.items[item] += 1
 
     def _initialize(self):
         """Initialize and set up the entire level"""
@@ -91,7 +97,8 @@ class Level:
 
         # Create trees
         for tree in map_data.get_layer_by_name("Trees"):
-            Tree((tree.x, tree.y), tree.image, [self.sprites, self.collision_sprites], tree.name)
+            Tree((tree.x, tree.y), tree.image,
+                 [self.sprites, self.tree_sprites, self.collision_sprites], tree.name, self._obtain_item)
 
         # Create flowers
         for flower in map_data.get_layer_by_name("Decoration"):
@@ -105,4 +112,5 @@ class Level:
         for player in map_data.get_layer_by_name("Player"):
             # If it's his starting position, create him
             if player.name == "Start":
-                self.player = Player((player.x, player.y), self.sprites, self.collision_sprites)
+                self.player = Player((player.x, player.y), self.sprites, self.collision_sprites,
+                                     self.tree_sprites)

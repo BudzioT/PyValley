@@ -8,7 +8,7 @@ from src.timer import Timer
 
 class Player(pygame.sprite.Sprite):
     """Player of the game"""
-    def __init__(self, pos, group, collision_sprites):
+    def __init__(self, pos, group, collision_sprites, tree_sprites):
         """Initialize the player"""
         super().__init__(group)
 
@@ -41,6 +41,8 @@ class Player(pygame.sprite.Sprite):
 
         # List of sprites that player can collide with
         self.collision_sprites = collision_sprites
+        # Get the trees
+        self.tree_sprites = tree_sprites
 
         # List of available tools
         self.tools = ["axe", "hoe", "water"]
@@ -56,6 +58,14 @@ class Player(pygame.sprite.Sprite):
         self.tool = self.tools[self.tool_index]
         # Current seed
         self.seed = self.seeds[self.seed_index]
+
+        # Player's items
+        self.items = {
+            "wood": 0,
+            "corn": 0,
+            "tomato": 0,
+            "apple": 0
+        }
 
         # Timers
         self.timers = {
@@ -75,6 +85,9 @@ class Player(pygame.sprite.Sprite):
 
         # Let the player move
         self._move(delta_time)
+
+        # Update the target position of player's tool usage
+        self._update_tool_target()
 
         # Set the player's state
         self._set_state()
@@ -223,9 +236,19 @@ class Player(pygame.sprite.Sprite):
                         self.rect.centery = self.hitbox.centery
                         self.pos.y = self.hitbox.centery
 
+    def _update_tool_target(self):
+        """Get the target position which the tool is used on"""
+        self.target = self.rect.center + settings.TOOL_OFFSETS[self.state.split('_')[0]]
+
     def _use_tool(self):
         """Use a selected tool"""
-        pass
+        # If the currently used tool is an axe
+        if self.tool == "axe":
+            # Search through the tree sprites
+            for tree in self.tree_sprites.sprites():
+                # If player's tool collides with it, damage it
+                if tree.rect.collidepoint(self.target):
+                    tree.handle_damage()
 
     def _use_seed(self):
         """Use currently selected seed"""

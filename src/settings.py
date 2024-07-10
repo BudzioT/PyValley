@@ -1,5 +1,7 @@
 import os
 
+from pygame.math import Vector2 as Vector
+
 
 class Settings:
     """Settings of the game"""
@@ -42,6 +44,13 @@ class Settings:
         self.APPLE_POS = {
             "Small": [(18, 17), (30, 37), (12, 50), (30, 45), (20, 30), (30, 10)],
             "Large": [(30, 24), (60, 65), (50, 50), (16, 40), (45, 50), (42, 70)]
+        }
+
+        self.TOOL_OFFSETS = {
+            "up": Vector(0, -10),
+            "down": Vector(0, 50),
+            "left": Vector(-50, 40),
+            "right": Vector(50, 40)
         }
 
 

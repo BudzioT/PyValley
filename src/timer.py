@@ -37,9 +37,9 @@ class Timer:
 
         # If duration from the start time passed
         if current_time - self.start_time >= self.duration:
+            # If there was a given function and the timer started, call it
+            if self.func and self.start_time != 0:
+                self.func()
+
             # Deactivate the timer
             self.stop()
-
-            # If there was a given function, call it
-            if self.func:
-                self.func()
