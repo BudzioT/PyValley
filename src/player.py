@@ -8,7 +8,7 @@ from src.timer import Timer
 
 class Player(pygame.sprite.Sprite):
     """Player of the game"""
-    def __init__(self, pos, group, collision_sprites, tree_sprites, interactive_sprites):
+    def __init__(self, pos, group, collision_sprites, tree_sprites, interactive_sprites, soil):
         """Initialize the player"""
         super().__init__(group)
 
@@ -79,6 +79,9 @@ class Player(pygame.sprite.Sprite):
             "seed": Timer(500, self._use_seed),
             "switch_seed": Timer(400)
         }
+
+        # The soil ground
+        self.soil = soil
 
     def update(self, delta_time):
         """Update the player"""
@@ -269,6 +272,10 @@ class Player(pygame.sprite.Sprite):
                 # If player's tool collides with it, damage it
                 if tree.rect.collidepoint(self.target):
                     tree.handle_damage()
+
+        # If player is using a hoe, hit the soil if possible
+        if self.tool == "hoe":
+            self.soil.handle_hit(self.target)
 
     def _use_seed(self):
         """Use currently selected seed"""

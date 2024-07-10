@@ -10,6 +10,7 @@ from src.sprites import Sprite, Water, Flower, Tree, InteractiveSprite
 from src.utilities import utilities
 from src.settings import settings
 from src.transition import Transition
+from src.soil import Soil
 
 
 class Level:
@@ -28,6 +29,9 @@ class Level:
 
         # Tree sprites
         self.tree_sprites = pygame.sprite.Group()
+
+        # Soil layer
+        self.soil = Soil(self.sprites)
 
         # Set up the level
         self._initialize()
@@ -133,7 +137,7 @@ class Level:
             # If it's his starting position, create him
             if player.name == "Start":
                 self.player = Player((player.x, player.y), self.sprites, self.collision_sprites,
-                                     self.tree_sprites, self.interactive_sprites)
+                                     self.tree_sprites, self.interactive_sprites, self.soil)
             # If it's a bed, create an interactive sprite, to change cycle of time
             if player.name == "Bed":
                 InteractiveSprite((player.x, player.y), (player.width, player.height),
