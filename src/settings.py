@@ -1,3 +1,6 @@
+import os
+
+
 class Settings:
     """Settings of the game"""
     def __init__(self):
@@ -8,6 +11,12 @@ class Settings:
 
         # Size of one tile
         self.TILE_SIZE = 64
+
+        # Animation speed
+        self.ANIMATION_SPEED = 4
+
+        # File's base path
+        self.BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
 # Instantiate settings
