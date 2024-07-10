@@ -24,6 +24,20 @@ class Sprite(pygame.sprite.Sprite):
         self.pos_z = pos_z
 
 
+class InteractiveSprite(Sprite):
+    """Sprite that allows for interactions"""
+    def __init__(self, pos, size, group, name):
+        """Initialize the interactive sprite"""
+        # Make an invisible surface of given size instead of image
+        surface = pygame.Surface(size)
+
+        # Initialize the parent class
+        super().__init__(pos, surface, group)
+
+        # Set the name of interactive sprite
+        self.name = name
+
+
 class Water(Sprite):
     """Water sprite class"""
     def __init__(self, pos, frames, group):
@@ -79,7 +93,7 @@ class Tree(Sprite):
         # Sprite group of apples of this tree
         self.apple_sprites = pygame.sprite.Group()
         # Create them
-        self._create_apples()
+        self.create_apples()
 
         # Allow player to obtain items
         self.obtain_item = obtain_item
@@ -106,10 +120,12 @@ class Tree(Sprite):
             # Generate a particle
             Particle(apple.rect.topleft, apple.image, self.groups()[0], settings.DEPTHS["fruit"])
 
+            # Add apple to the player's items
+            self.obtain_item("apple")
             # Destroy the apple
             apple.kill()
 
-    def _create_apples(self):
+    def create_apples(self):
         """Create apples on the tree"""
         # Go through each apple position possible
         for pos in self.apple_pos:
@@ -118,11 +134,18 @@ class Tree(Sprite):
                 Sprite((pos[0] + self.rect.left, pos[1] + self.rect.top),
                        self.apple_surface, [self.groups()[0], self.apple_sprites], settings.DEPTHS["fruit"])
 
+    def destroy_apples(self):
+        """Destroy all the current apples"""
+        for apple in self.apple_sprites:
+            apple.kill()
+
     def _check_destroy(self):
         """Check if tree is destroyed, handle it"""
         if self.health <= 0:
             # Set the alive flag to false
             self.alive = False
+            # Obtain the wood
+            self.obtain_item("wood")
 
             # Create a particle
             Particle(self.rect.topleft, self.image, self.groups()[0], self.pos_z)

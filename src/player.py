@@ -8,7 +8,7 @@ from src.timer import Timer
 
 class Player(pygame.sprite.Sprite):
     """Player of the game"""
-    def __init__(self, pos, group, collision_sprites, tree_sprites):
+    def __init__(self, pos, group, collision_sprites, tree_sprites, interactive_sprites):
         """Initialize the player"""
         super().__init__(group)
 
@@ -41,8 +41,13 @@ class Player(pygame.sprite.Sprite):
 
         # List of sprites that player can collide with
         self.collision_sprites = collision_sprites
+        # Sprites that player can interact with
+        self.interactive_sprites = interactive_sprites
         # Get the trees
         self.tree_sprites = tree_sprites
+
+        # Sleep flag
+        self.sleep = False
 
         # List of available tools
         self.tools = ["axe", "hoe", "water"]
@@ -99,8 +104,8 @@ class Player(pygame.sprite.Sprite):
         # Get the keys pressed
         keys = pygame.key.get_pressed()
 
-        # If player isn't using a tool, allow for input
-        if not self.timers["tool"].active:
+        # If player isn't using a tool and isn't sleeping, allow for input
+        if not self.timers["tool"].active and not self.sleep:
             # If player wants to move left, set his direction to the left
             if keys[pygame.K_LEFT] or keys[pygame.K_a]:
                 self.direction.x = -1
@@ -158,6 +163,21 @@ class Player(pygame.sprite.Sprite):
                     self._change_seed(1)
                     # Start the seed switch cooldown
                     self.timers["switch_seed"].start()
+
+            # If player presses RETURN (ENTER), try to go into interaction
+            if keys[pygame.K_RETURN]:
+                collided_sprites = pygame.sprite.spritecollide(self, self.interactive_sprites, False)
+                # If there are any collisions, check with what sprite name
+                if collided_sprites:
+                    # If this is a trader, interact in trade
+                    if collided_sprites[0].name == "Trader":
+                        pass
+                    # Otherwise it's a bed, run the new cycle
+                    else:
+                        # Go into left idle state, for nice look
+                        self.state = "left_idle"
+                        # Set player's sleep flag
+                        self.sleep = True
 
     def _move(self, delta_time):
         """Move the player in given direction"""

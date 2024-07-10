@@ -6,9 +6,10 @@ from pytmx.util_pygame import load_pygame
 from src.player import Player
 from src.ui import UI
 from src.groups import CameraGroup
-from src.sprites import Sprite, Water, Flower, Tree
+from src.sprites import Sprite, Water, Flower, Tree, InteractiveSprite
 from src.utilities import utilities
 from src.settings import settings
+from src.transition import Transition
 
 
 class Level:
@@ -20,13 +21,19 @@ class Level:
 
         # Group of all sprites
         self.sprites = CameraGroup()
+        # Interactive sprites
+        self.interactive_sprites = pygame.sprite.Group()
         # Sprites that have collisions
         self.collision_sprites = pygame.sprite.Group()
+
         # Tree sprites
         self.tree_sprites = pygame.sprite.Group()
 
         # Set up the level
         self._initialize()
+
+        # Day-skip transition
+        self.transition = Transition(self._reset_day, self.player)
 
         # Game's user's interface
         self.ui = UI(self.player)
@@ -55,9 +62,22 @@ class Level:
         # Update all sprites
         self.sprites.update(delta_time)
 
+        # If player sleeps, run the day skip transition
+        if self.player.sleep:
+            self.transition.display()
+
     def _obtain_item(self, item):
         """Obtain one more of the given item"""
         self.player.items[item] += 1
+
+    def _reset_day(self):
+        """Reset everything that happens in a one-day cycle"""
+        # Destroy apples from every tree on the map
+        for tree in self.tree_sprites.sprites():
+            # Destroy apples
+            tree.destroy_apples()
+            # Create new ones
+            tree.create_apples()
 
     def _initialize(self):
         """Initialize and set up the entire level"""
@@ -108,9 +128,13 @@ class Level:
         for pos_x, pos_y, surface in map_data.get_layer_by_name("Collision").tiles():
             Sprite((pos_x * settings.TILE_SIZE, pos_y * settings.TILE_SIZE), surface, self.collision_sprites)
 
-        # Create the player
+        # Create the player related tiles
         for player in map_data.get_layer_by_name("Player"):
             # If it's his starting position, create him
             if player.name == "Start":
                 self.player = Player((player.x, player.y), self.sprites, self.collision_sprites,
-                                     self.tree_sprites)
+                                     self.tree_sprites, self.interactive_sprites)
+            # If it's a bed, create an interactive sprite, to change cycle of time
+            if player.name == "Bed":
+                InteractiveSprite((player.x, player.y), (player.width, player.height),
+                                  self.interactive_sprites, player.name)
