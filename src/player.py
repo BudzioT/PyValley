@@ -8,7 +8,7 @@ from src.timer import Timer
 
 class Player(pygame.sprite.Sprite):
     """Player of the game"""
-    def __init__(self, pos, group):
+    def __init__(self, pos, group, collision_sprites):
         """Initialize the player"""
         super().__init__(group)
 
@@ -38,6 +38,9 @@ class Player(pygame.sprite.Sprite):
         self.pos = Vector(self.rect.center)
         # Depth position of the player
         self.pos_z = settings.DEPTHS["main"]
+
+        # List of sprites that player can collide with
+        self.collision_sprites = collision_sprites
 
         # List of available tools
         self.tools = ["axe", "hoe", "water"]
@@ -157,10 +160,16 @@ class Player(pygame.sprite.Sprite):
         # Update player's horizontal rectangle position
         self.rect.centerx = self.hitbox.centerx
 
+        # Check horizontal collisions
+        self._collisions("horizontal")
+
         # Move the player vertically
         self.pos.y += self.direction.y * self.speed * delta_time
         self.hitbox.centery = round(self.pos.y)
         self.rect.centery = self.hitbox.centery
+
+        # Check horizontal collisions
+        self._collisions("vertical")
 
     def _update_timers(self):
         """Update all the player's timers"""
@@ -179,6 +188,40 @@ class Player(pygame.sprite.Sprite):
         if self.timers["tool"].active:
             # Set the state to the given tool usage
             self.state = self.state.split('_')[0] + '_' + self.tool
+
+    def _collisions(self, direction):
+        """Check and handle collisions"""
+        # Go through each collide-able sprite
+        for sprite in self.collision_sprites.sprites():
+            # If it has a hitbox, check for collisions
+            if hasattr(sprite, "hitbox"):
+                # If it collides with player, handle it
+                if sprite.hitbox.colliderect(self.hitbox):
+                    # Handle horizontal collisions
+                    if direction == "horizontal":
+                        # If player move's to the right, hug him to the left side of sprite
+                        if self.direction.x > 0:
+                            self.hitbox.right = sprite.hitbox.left
+                        # Otherwise if he moves to the left, hug him to the right side
+                        elif self.direction.x < 0:
+                            self.hitbox.left = sprite.hitbox.right
+
+                        # Update the hitboxes and position
+                        self.rect.centerx = self.hitbox.centerx
+                        self.pos.x = self.hitbox.centerx
+
+                    # If there are vertical collisions
+                    elif direction == "vertical":
+                        # Handle top collisions
+                        if self.direction.y < 0:
+                            self.hitbox.top = sprite.hitbox.bottom
+                        # Handle bottom collisions
+                        elif self.direction.y > 0:
+                            self.hitbox.bottom = sprite.hitbox.top
+
+                        # Update the position and hitboxes
+                        self.rect.centery = self.hitbox.centery
+                        self.pos.y = self.hitbox.centery
 
     def _use_tool(self):
         """Use a selected tool"""

@@ -39,6 +39,11 @@ class Settings:
             "rain_drops": 10
         }
 
+        self.APPLE_POS = {
+            "Small": [(18, 17), (30, 37), (12, 50), (30, 45), (20, 30), (30, 10)],
+            "Large": [(30, 24), (60, 65), (50, 50), (16, 40), (45, 50), (42, 70)]
+        }
+
 
 # Instantiate settings
 settings = Settings()

@@ -20,6 +20,8 @@ class Level:
 
         # Group of all sprites
         self.sprites = CameraGroup()
+        # Sprites that have collisions
+        self.collision_sprites = pygame.sprite.Group()
 
         # Set up the level
         self._initialize()
@@ -77,21 +79,30 @@ class Level:
         # Build fences
         for pos_x, pos_y, surface in map_data.get_layer_by_name("Fence").tiles():
             # Place the fences
-            Sprite((pos_x * settings.TILE_SIZE, pos_y * settings.TILE_SIZE), surface, self.sprites)
+            Sprite((pos_x * settings.TILE_SIZE, pos_y * settings.TILE_SIZE), surface,
+                   [self.sprites, self.collision_sprites])
 
         # Get the frames of water animation
         water_frames = utilities.load_folder("../graphics/water")
         # Place water
         for pos_x, pos_y, surface in map_data.get_layer_by_name("Water").tiles():
-            Water((pos_x * settings.TILE_SIZE, pos_y * settings.TILE_SIZE), water_frames, self.sprites)
+            Water((pos_x * settings.TILE_SIZE, pos_y * settings.TILE_SIZE), water_frames,
+                  [self.sprites, self.collision_sprites])
 
         # Create trees
         for tree in map_data.get_layer_by_name("Trees"):
-            Tree((tree.x, tree.y), tree.image, self.sprites, tree.name)
+            Tree((tree.x, tree.y), tree.image, [self.sprites, self.collision_sprites], tree.name)
 
         # Create flowers
         for flower in map_data.get_layer_by_name("Decoration"):
-            Flower((flower.x, flower.y), flower.image, self.sprites)
+            Flower((flower.x, flower.y), flower.image, [self.sprites, self.collision_sprites])
+
+        # Place the invisible collision sprites
+        for pos_x, pos_y, surface in map_data.get_layer_by_name("Collision").tiles():
+            Sprite((pos_x * settings.TILE_SIZE, pos_y * settings.TILE_SIZE), surface, self.collision_sprites)
 
         # Create the player
-        self.player = Player((640, 360), self.sprites)
+        for player in map_data.get_layer_by_name("Player"):
+            # If it's his starting position, create him
+            if player.name == "Start":
+                self.player = Player((player.x, player.y), self.sprites, self.collision_sprites)
