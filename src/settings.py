@@ -41,11 +41,13 @@ class Settings:
             "rain_drops": 10
         }
 
+        # Apple positions
         self.APPLE_POS = {
             "Small": [(18, 17), (30, 37), (12, 50), (30, 45), (20, 30), (30, 10)],
             "Large": [(30, 24), (60, 65), (50, 50), (16, 40), (45, 50), (42, 70)]
         }
 
+        # Offsets of tools in hands of character
         self.TOOL_OFFSETS = {
             "up": Vector(0, -10),
             "down": Vector(0, 50),
@@ -53,9 +55,24 @@ class Settings:
             "right": Vector(50, 40)
         }
 
+        # Grow speed of seeds
         self.GROW_SPEED = {
             "corn": 0.8,
             "tomato": 0.6
+        }
+
+        # Prices that player can buy things for
+        self.PURCHASE_PRICES = {
+            "corn": 5,
+            "tomato": 8
+        }
+
+        # Prices that player can sell things for
+        self.SELL_PRICES = {
+            "wood": 3,
+            "apple": 1,
+            "corn": 7,
+            "tomato": 12
         }
 
 
