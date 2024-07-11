@@ -30,4 +30,5 @@ GAME:
 - Pygame: https://www.pygame.org/news
 
 ## 🏛️: Assets
-Grab the AWESOME assets made by Cup Nooble from here: https://cupnooble.itch.io/sprout-lands-asset-pack
+- Grab the AWESOME assets made by Cup Nooble from here: https://cupnooble.itch.io/sprout-lands-asset-pack
+- Beautiful heart assets by Pixel Frog: https://pixelfrog-assets.itch.io/treasure-hunters
