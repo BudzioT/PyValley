@@ -29,4 +29,5 @@ GAME:
 ## :page_facing_up: Links to modules
 - Pygame: https://www.pygame.org/news
 
+## 🏛️: Assets
 Grab the AWESOME assets made by Cup Nooble from here: https://cupnooble.itch.io/sprout-lands-asset-pack
