@@ -274,8 +274,12 @@ class Player(pygame.sprite.Sprite):
                     tree.handle_damage()
 
         # If player is using a hoe, hit the soil if possible
-        if self.tool == "hoe":
+        elif self.tool == "hoe":
             self.soil.handle_hit(self.target)
+
+        # Otherwise, if player uses watering can, water the soil
+        elif self.tool == "water":
+            self.soil.water(self.target)
 
     def _use_seed(self):
         """Use currently selected seed"""
