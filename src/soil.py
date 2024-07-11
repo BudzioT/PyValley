@@ -139,7 +139,6 @@ class Soil:
         # Check every plant
         for plant in self.plant_sprites.sprites():
             # Update it
-            print("PLANT", type(player_hitbox))
             plant.check(player_hitbox)
 
     def _remove_plant(self, pos):
@@ -149,6 +148,9 @@ class Soil:
         pos_y = pos[1] // settings.TILE_SIZE
         # Get soil at the calculated position
         soil = self.grid[pos_y][pos_x]
+
+        # Remove the plant from the soil
+        soil.remove('P')
 
     def water(self, target):
         """Water the soil in the given position"""
@@ -364,19 +366,21 @@ class Plant(pygame.sprite.Sprite):
                     self.hitbox = self.rect.copy().inflate(-25, -self.rect.height * 0.4)
 
                 # If plant is already fully grown, don't grow it anymore
-                elif self.stage >= self.max_stage:
+                if self.stage >= self.max_stage:
                     self.stage = self.max_stage
                     # Indicate that the plant is ready to harvest
                     self.harvestable = True
 
-                # Try to get a new image depending on the stage, and update the rectangle
-                self.image = self.frames[int(self.stage)]
-                self.rect = self.image.get_rect(midbottom=self.soil.rect.midbottom + Vector(0, self.offset_y))
+                # If there are still frames left
+                if int(self.stage) <= len(self.frames) - 1:
+                    # Try to get a new image depending on the stage, and update the rectangle
+                    self.image = self.frames[int(self.stage)]
+                    self.rect = self.image.get_rect(midbottom=self.soil.rect.midbottom + Vector(0, self.offset_y))
 
     def check(self, player_hitbox):
         """Update the plant"""
         # If there isn't active cooldown
-        if not self.damage_cooldown.active:
+        if not self.damage_cooldown.active and not hasattr(self, "hitbox"):
             # Check if player stepped on non-grown plant
             if player_hitbox.hitbox.colliderect(self.rect):
                 # Damage the plant
@@ -386,5 +390,5 @@ class Plant(pygame.sprite.Sprite):
 
                 # If plant was stepped on too much, kill it
                 if self.health == 0:
-                    self.remove_plant()
+                    self.remove_plant(self.rect.center)
                     self.kill()

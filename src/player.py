@@ -8,7 +8,7 @@ from src.timer import Timer
 
 class Player(pygame.sprite.Sprite):
     """Player of the game"""
-    def __init__(self, pos, group, collision_sprites, tree_sprites, interactive_sprites, soil):
+    def __init__(self, pos, group, collision_sprites, tree_sprites, interactive_sprites, soil, activate_shop):
         """Initialize the player"""
         super().__init__(group)
 
@@ -72,6 +72,15 @@ class Player(pygame.sprite.Sprite):
             "apple": 0
         }
 
+        # Player's current seeds
+        self.current_seeds = {
+            "corn": 5,
+            "tomato": 4
+        }
+
+        # His money
+        self.money = 150
+
         # Timers
         self.timers = {
             "tool": Timer(500, self._use_tool),
@@ -82,6 +91,9 @@ class Player(pygame.sprite.Sprite):
 
         # The soil ground
         self.soil = soil
+
+        # Function to activate the shop
+        self.activate_shop = activate_shop
 
     def update(self, delta_time):
         """Update the player"""
@@ -181,7 +193,7 @@ class Player(pygame.sprite.Sprite):
                 if collided_sprites:
                     # If this is a trader, interact in trade
                     if collided_sprites[0].name == "Trader":
-                        pass
+                        self.activate_shop()
                     # Otherwise it's a bed, run the new cycle
                     else:
                         # Go into left idle state, for nice look
@@ -290,7 +302,13 @@ class Player(pygame.sprite.Sprite):
 
     def _use_seed(self):
         """Use currently selected seed"""
-        self.soil.plant(self.seed, self.target)
+        # if there is any seed left of the selected type
+        if self.current_seeds[self.seed] > 0:
+            # Plant it
+            self.soil.plant(self.seed, self.target)
+
+            # Decrease the current amount of it
+            self.current_seeds[self.seed] -= 1
 
     def _change_tool(self, amount):
         """Change the tool index by the given amount"""

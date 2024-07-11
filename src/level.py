@@ -7,12 +7,13 @@ from pytmx.util_pygame import load_pygame
 from src.player import Player
 from src.ui import UI
 from src.groups import CameraGroup
-from src.sprites import Sprite, Water, Flower, Tree, InteractiveSprite
+from src.sprites import Sprite, Water, Flower, Tree, InteractiveSprite, Particle
 from src.utilities import utilities
 from src.settings import settings
 from src.transition import Transition
 from src.soil import Soil
 from src.weather import Rain
+from src.sky import Sky
 
 
 class Level:
@@ -49,9 +50,15 @@ class Level:
         # Update the soil's flag
         self.soil.rain_active = self.rain_active
 
+        # Game's sky
+        self.sky = Sky()
+
         # Water all the existing tiles if it's raining
         if self.rain_active:
             self.soil.water_all()
+
+        # Shop open flag
+        self.shop = False
 
         # Game's user's interface
         self.ui = UI(self.player)
@@ -63,6 +70,8 @@ class Level:
 
         # Update elements positions
         self._update_positions(delta_time)
+
+        print(self.shop)
 
     def _update_surface(self):
         """Update the level's surface, draw the elements"""
@@ -84,9 +93,13 @@ class Level:
         if self.rain_active:
             self.rain.update()
 
-        print("LEVEL", type(self.player))
         # Check the plants condition
         self.soil.check_plants(self.player)
+        # Check collisions with them
+        self._plant_collision()
+
+        # Display the daytime sky
+        self.sky.display(delta_time)
 
         # If player sleeps, run the day skip transition
         if self.player.sleep:
@@ -115,6 +128,33 @@ class Level:
         self.rain_active = random.randint(0, 10) > 4
         # Update the soil's raining flag
         self.soil.rain_active = self.rain_active
+
+        # Reset the sky color
+        self.sky.start_color = [255, 255, 255]
+
+    def _plant_collision(self):
+        """Check and handle collisions with plants"""
+        # Check if there are any plants
+        if self.soil.plant_sprites:
+            # If there are, check every one of them
+            for plant in self.soil.plant_sprites.sprites():
+                # If it's harvestable and collides with player, remove it
+                if plant.harvestable and plant.rect.colliderect(self.player.hitbox):
+                    # Add plant harvests to the player's items
+                    self._obtain_item(plant.plant_type)
+
+                    # Remove it from the soil
+                    plant.remove_plant(plant.rect.center)
+                    # Destroy the plant
+                    plant.kill()
+
+                    # Make a particle
+                    Particle(plant.rect.topleft, plant.image, self.sprites, settings.DEPTHS["main"])
+
+    def _activate_shop(self):
+        """Activate Trader's shop"""
+        # Switch on or off the shop flag
+        self.shop = not self.shop
 
     def _initialize(self):
         """Initialize and set up the entire level"""
@@ -170,8 +210,12 @@ class Level:
             # If it's his starting position, create him
             if player.name == "Start":
                 self.player = Player((player.x, player.y), self.sprites, self.collision_sprites,
-                                     self.tree_sprites, self.interactive_sprites, self.soil)
+                                     self.tree_sprites, self.interactive_sprites, self.soil, self._activate_shop)
             # If it's a bed, create an interactive sprite, to change cycle of time
             if player.name == "Bed":
+                InteractiveSprite((player.x, player.y), (player.width, player.height),
+                                  self.interactive_sprites, player.name)
+            # On condition that it's a trader, place him as an interactive sprite
+            if player.name == "Trader":
                 InteractiveSprite((player.x, player.y), (player.width, player.height),
                                   self.interactive_sprites, player.name)
