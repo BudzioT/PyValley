@@ -11,6 +11,7 @@ from src.utilities import utilities
 from src.settings import settings
 from src.transition import Transition
 from src.soil import Soil
+from src.weather import Rain
 
 
 class Level:
@@ -39,6 +40,11 @@ class Level:
         # Day-skip transition
         self.transition = Transition(self._reset_day, self.player)
 
+        # Rain weather
+        self.rain = Rain(self.sprites)
+        # Rain flag
+        self.rain_active = True
+
         # Game's user's interface
         self.ui = UI(self.player)
 
@@ -66,6 +72,10 @@ class Level:
         # Update all sprites
         self.sprites.update(delta_time)
 
+        # If it's raining, update the rain weather
+        if self.rain_active:
+            self.rain.update()
+
         # If player sleeps, run the day skip transition
         if self.player.sleep:
             self.transition.display()
@@ -82,6 +92,9 @@ class Level:
             tree.destroy_apples()
             # Create new ones
             tree.create_apples()
+
+        # Remove water from the soil
+        self.soil.remove_water()
 
     def _initialize(self):
         """Initialize and set up the entire level"""

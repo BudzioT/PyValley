@@ -82,6 +82,8 @@ class Soil:
                     # Create soil tile in place
                     self._create_soil_tiles()
 
+                    # If it's raining, update the tile, to be watered
+
     def _create_soil_tiles(self):
         """Create soil tiles in places where the player hit with a hoe"""
         # Clean the current soil sprites
@@ -118,7 +120,35 @@ class Soil:
                 surface = random.choice(self.water_surfaces)
 
                 # Create the soil water tile
-                SoilWaterTile(pos, surface, )
+                SoilWaterTile(pos, surface, [self.sprites, self.watered_soil_sprites])
+
+    def water_all(self):
+        """Water all the soil tiles"""
+        # Go through each soil tile
+        for row_index, row in enumerate(self.grid):
+            for column_index, cell in enumerate(row):
+                # If the soil is hit and isn't watered already, water it
+                if 'H' in cell and 'W' not in cell:
+                    # Set the watered flag
+                    cell.append('W')
+                    # Create the soil water tile
+                    SoilWaterTile((column_index * settings.TILE_SIZE, row_index * settings.TILE_SIZE),
+                                  random.choice(self.water_surfaces),
+                                  [self.sprites, self.watered_soil_sprites])
+
+
+    def remove_water(self):
+        """Remove the water from soil tiles"""
+        # Go through each of soil sprite and destroy it
+        for water_sprite in self.watered_soil_sprites.sprites():
+            water_sprite.kill()
+
+        # Check the grid
+        for row in self.grid:
+            for cell in row:
+                # If there is a watered tile, remove the water flag
+                if 'W' in cell:
+                    cell.remove('W')
 
     def _get_soil_type(self, row_index, row, column_index):
         """Get the type of soil to place depending on the near hit farmable tiles"""
