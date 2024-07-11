@@ -95,6 +95,9 @@ class Menu:
                 # Handle shopping
                 self._shop(entry)
 
+                # Start the cooldown timer
+                self.timer.start()
+
 
 
     def _display(self):
@@ -179,6 +182,16 @@ class Menu:
                 self.player.money -= price
 
         # Otherwise, if player is selling
+        else:
+            # If player has this item, sell it
+            if self.player.items[entry] > 0:
+                # Get the price of an item
+                price = settings.SELL_PRICES[entry]
+
+                # Decrease amount of it from his items
+                self.player.items[entry] -= 1
+                # Increase his amount of money
+                self.player.money += price
 
     def _initialize(self):
         """Initialize components of the menu"""

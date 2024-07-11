@@ -1,4 +1,5 @@
 import random
+from os.path import join as path_join
 
 import pygame
 
@@ -36,6 +37,35 @@ class InteractiveSprite(Sprite):
 
         # Set the name of interactive sprite
         self.name = name
+
+
+class AnimatedSprite(Sprite):
+    """Sprite with an animation"""
+    def __init__(self, pos, frames, group, pos_z=settings.DEPTHS["main"], animation_speed=8):
+        """Initialize the sprite with animation"""
+        # Animation frames
+        self.frames = frames
+        # Current frame
+        self.frame = 0
+
+        # Initialize the default sprite
+        super().__init__(pos, self.frames[self.frame], group, pos_z)
+
+        # Set the animation speed
+        self.animation_speed = animation_speed
+
+    def update(self, delta_time):
+        """Update the animated sprite"""
+        # Animate it
+        self._animate(delta_time)
+
+    def _animate(self, delta_time):
+        """Animate the sprite"""
+        # Increase the currently used frame
+        self.frame = self.animation_speed * delta_time
+
+        # Set the image depending on the current frame, make sure it is a correct frame
+        self.image = self.frames[int(self.frame % len(self.frames))]
 
 
 class Water(Sprite):
@@ -101,6 +131,10 @@ class Tree(Sprite):
         # Time of invincibility
         self.dodge_time = Timer(200)
 
+        # Axe hit sound
+        self.axe_sound = pygame.mixer.Sound(path_join(settings.BASE_PATH, "../audio/axe.mp3"))
+        self.axe_sound.set_volume(0.5)
+
     def update(self, delta_time):
         """Update the tree"""
         # Check and handle tree's death if it's still alive
@@ -111,6 +145,9 @@ class Tree(Sprite):
         """Handle tree getting damaged"""
         # Decrease the health
         self.health -= 1
+
+        # Play the sound effect
+        self.axe_sound.play()
 
         # If there are any apples, try to remove a random one
         if len(self.apple_sprites.sprites()) > 0:

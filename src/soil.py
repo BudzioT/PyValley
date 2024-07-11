@@ -36,6 +36,14 @@ class Soil:
         # Create farmable rectangles based off the grid
         self._create_farmable_rects()
 
+        # Hoe hit sound effect
+        self.hoe_sound = pygame.mixer.Sound(path_join(settings.BASE_PATH, "../audio/hoe.wav"))
+        self.plant_sound = pygame.mixer.Sound(path_join(settings.BASE_PATH, "../audio/plant.wav"))
+
+        # Lower the volumes
+        self.hoe_sound.set_volume(0.1)
+        self.plant_sound.set_volume(0.4)
+
     def _create_grid(self):
         """Create a grid of soil"""
         # Get map's surface to get the size
@@ -86,6 +94,10 @@ class Soil:
                 if 'x' in self.grid[pos_y][pos_x]:
                     # Change the tile into hit one
                     self.grid[pos_y][pos_x].append("H")
+
+                    # Play the hit sound effect
+                    self.hoe_sound.play()
+
                     # Create soil tile in place
                     self._create_soil_tiles()
 
@@ -125,6 +137,10 @@ class Soil:
                 if 'P' not in self.grid[pos_y][pos_x]:
                     # Append the plant flag to the soil
                     self.grid[pos_y][pos_x].append('P')
+
+                    # Play the plant sound effect
+                    self.plant_sound.play()
+
                     # Create a plant
                     Plant(seed, [self.sprites, self.plant_sprites, self.collision_sprites], soil,
                           self._watered, self._remove_plant)

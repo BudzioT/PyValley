@@ -1,4 +1,5 @@
 import random
+import sys
 from os.path import join as path_join
 
 import pygame
@@ -47,7 +48,7 @@ class Level:
         self.rain = Rain(self.sprites)
 
         # Rain flag
-        self.rain_active = random.randint(0, 10) > 4
+        self.rain_active = random.randint(0, 10) > 6
         # Update the soil's flag
         self.soil.rain_active = self.rain_active
 
@@ -67,15 +68,27 @@ class Level:
         # Game's user's interface
         self.ui = UI(self.player)
 
+        # Obtaining item sound
+        self.obtain_sound = pygame.mixer.Sound(path_join(settings.BASE_PATH, "../audio/success.wav"))
+        # Lower its volume
+        self.obtain_sound.set_volume(0.2)
+
+        # Background music
+        self.music = pygame.mixer.Sound(path_join(settings.BASE_PATH, "../audio/music.mp3"))
+        # Set its volume
+        self.music.set_volume(0.2)
+        # Play it in loops
+        self.music.play(-1)
+
     def run(self, delta_time):
         """Run the level"""
         # Update the surface
-        self._update_surface()
+        self._update_surface(delta_time)
 
         # Update elements positions
         self._update_positions(delta_time)
 
-    def _update_surface(self):
+    def _update_surface(self, delta_time):
         """Update the level's surface, draw the elements"""
         # Fill the surface with a color
         self.surface.fill("gray")
@@ -84,7 +97,7 @@ class Level:
         self.sprites.custom_draw(self.player)
 
         # Draw the user's interface
-        self.ui.display()
+        self.ui.display(delta_time)
 
     def _update_positions(self, delta_time):
         """Update positions of level's elements"""
@@ -112,12 +125,26 @@ class Level:
         # Display the daytime sky
         self.sky.display(delta_time)
 
+    def _check_game_over(self):
+        """Check and handle game over"""
+        # If player doesn't have any health left, exit the game
+        if self.player.health <= 0:
+            pygame.quit()
+            sys.exit()
+
     def _obtain_item(self, item):
         """Obtain one more of the given item"""
+        # Obtain it
         self.player.items[item] += 1
+
+        # Play the sound
+        self.obtain_sound.play()
 
     def _reset_day(self):
         """Reset everything that happens in a one-day cycle"""
+        # Update amount of hearts
+        self.ui.create_hearts(self.player.health)
+
         # Destroy apples from every tree on the map
         for tree in self.tree_sprites.sprites():
             # Destroy apples
@@ -128,11 +155,17 @@ class Level:
         # Grow the plants
         self.soil.update_plants()
 
+        # Decrease the player's health
+        self.player.health -= 1
+
+        # Check game over
+        self._check_game_over()
+
         # Remove water from the soil
         self.soil.remove_water()
 
         # Set the weather to raining randomly
-        self.rain_active = random.randint(0, 10) > 4
+        self.rain_active = random.randint(0, 10) > 6
         # Update the soil's raining flag
         self.soil.rain_active = self.rain_active
 

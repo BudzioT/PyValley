@@ -62,5 +62,3 @@ if __name__ == "__main__":
     # Create and run the game
     game = Game()
     game.run()
-
-# IDEA: ADD HEARTS, NEED TO EAT SURVIVAL MECHANIC

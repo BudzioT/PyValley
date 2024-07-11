@@ -1,3 +1,5 @@
+from os.path import join as path_join
+
 import pygame
 from pygame.math import Vector2 as Vector
 
@@ -79,7 +81,7 @@ class Player(pygame.sprite.Sprite):
         }
 
         # His money
-        self.money = 150
+        self.money = 10
 
         # Timers
         self.timers = {
@@ -94,6 +96,14 @@ class Player(pygame.sprite.Sprite):
 
         # Function to activate the shop
         self.activate_shop = activate_shop
+
+        # Watering sound
+        self.water_sound = pygame.mixer.Sound(path_join(settings.BASE_PATH, "../audio/water.mp3"))
+        # Lower down the volume
+        self.water_sound.set_volume(0.1)
+
+        # Player's health
+        self.health = 3
 
     def update(self, delta_time):
         """Update the player"""
@@ -201,6 +211,28 @@ class Player(pygame.sprite.Sprite):
                         # Set player's sleep flag
                         self.sleep = True
 
+                # If there isn't a Trader nearby, try to eat
+                else:
+                    # If player has at least two apples
+                    if self.items["apple"] > 1:
+                        # If player doesn't have already max health, eat them
+                        if self.health < 3:
+                            # Decrease the count of apples
+                            self.items["apple"] -= 2
+
+                            # Increase the health
+                            self.health += 1
+
+                    # Otherwise if player has a tomato, eat it
+                    elif self.items["tomato"] > 0:
+                        # Check if he doesn't have max health yet
+                        if self.health < 3:
+                            # Decrease the tomato count
+                            self.items["tomato"] -= 1
+
+                            # Increase his health
+                            self.health += 1
+
     def _move(self, delta_time):
         """Move the player in given direction"""
         # If length of the vector is higher than 0, meaning player moves
@@ -298,7 +330,11 @@ class Player(pygame.sprite.Sprite):
 
         # Otherwise, if player uses watering can, water the soil
         elif self.tool == "water":
+            # Water the target if possible
             self.soil.water(self.target)
+
+            # Play the watering sound
+            self.water_sound.play()
 
     def _use_seed(self):
         """Use currently selected seed"""
