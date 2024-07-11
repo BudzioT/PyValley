@@ -14,6 +14,7 @@ from src.transition import Transition
 from src.soil import Soil
 from src.weather import Rain
 from src.sky import Sky
+from src.menu import Menu
 
 
 class Level:
@@ -60,6 +61,9 @@ class Level:
         # Shop open flag
         self.shop = False
 
+        # Menu
+        self.menu = Menu(self.player, self._activate_shop)
+
         # Game's user's interface
         self.ui = UI(self.player)
 
@@ -70,8 +74,6 @@ class Level:
 
         # Update elements positions
         self._update_positions(delta_time)
-
-        print(self.shop)
 
     def _update_surface(self):
         """Update the level's surface, draw the elements"""
@@ -86,24 +88,29 @@ class Level:
 
     def _update_positions(self, delta_time):
         """Update positions of level's elements"""
-        # Update all sprites
-        self.sprites.update(delta_time)
+        # If shop is open, update and show the menu
+        if self.shop:
+            self.menu.update()
+        # Otherwise update the sprites that aren't active in the menu
+        else:
+            # Update all sprites
+            self.sprites.update(delta_time)
 
-        # If it's raining, update the rain weather
-        if self.rain_active:
-            self.rain.update()
+            # Check the plants condition
+            self.soil.check_plants(self.player)
+            # Check collisions with them
+            self._plant_collision()
 
-        # Check the plants condition
-        self.soil.check_plants(self.player)
-        # Check collisions with them
-        self._plant_collision()
+            # If it's raining, update the rain weather
+            if self.rain_active:
+                self.rain.update()
+
+            # If player sleeps, run the day skip transition
+            if self.player.sleep:
+                self.transition.display()
 
         # Display the daytime sky
         self.sky.display(delta_time)
-
-        # If player sleeps, run the day skip transition
-        if self.player.sleep:
-            self.transition.display()
 
     def _obtain_item(self, item):
         """Obtain one more of the given item"""
