@@ -33,7 +33,7 @@ class Level:
         self.tree_sprites = pygame.sprite.Group()
 
         # Soil layer
-        self.soil = Soil(self.sprites)
+        self.soil = Soil(self.sprites, self.collision_sprites)
 
         # Set up the level
         self._initialize()
@@ -83,6 +83,10 @@ class Level:
         # If it's raining, update the rain weather
         if self.rain_active:
             self.rain.update()
+
+        print("LEVEL", type(self.player))
+        # Check the plants condition
+        self.soil.check_plants(self.player)
 
         # If player sleeps, run the day skip transition
         if self.player.sleep:

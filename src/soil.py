@@ -7,15 +7,18 @@ from pytmx.util_pygame import load_pygame
 
 from src.utilities import utilities
 from src.settings import settings
+from src.timer import Timer
 
 
 class Soil:
     """Class that represents soil path"""
 
-    def __init__(self, sprites):
+    def __init__(self, sprites, collision_sprites):
         """Initialize the soil"""
         # Get all the game's visible sprites
         self.sprites = sprites
+        # Access the collision sprites
+        self.collision_sprites = collision_sprites
 
         # Soil sprites
         self.soil_sprites = pygame.sprite.Group()
@@ -123,12 +126,29 @@ class Soil:
                     # Append the plant flag to the soil
                     self.grid[pos_y][pos_x].append('P')
                     # Create a plant
-                    Plant(seed, [self.sprites, self.plant_sprites], soil, self._watered)
+                    Plant(seed, [self.sprites, self.plant_sprites, self.collision_sprites], soil,
+                          self._watered, self._remove_plant)
 
     def update_plants(self):
         """Update plant stages"""
         for plant in self.plant_sprites:
             plant.grow()
+
+    def check_plants(self, player_hitbox):
+        """Check if plants are fine"""
+        # Check every plant
+        for plant in self.plant_sprites.sprites():
+            # Update it
+            print("PLANT", type(player_hitbox))
+            plant.check(player_hitbox)
+
+    def _remove_plant(self, pos):
+        """Remove plant from specified position"""
+        # Calculate tile position
+        pos_x = pos[0] // settings.TILE_SIZE
+        pos_y = pos[1] // settings.TILE_SIZE
+        # Get soil at the calculated position
+        soil = self.grid[pos_y][pos_x]
 
     def water(self, target):
         """Water the soil in the given position"""
@@ -286,7 +306,7 @@ class SoilWaterTile(pygame.sprite.Sprite):
 
 class Plant(pygame.sprite.Sprite):
     """Plant that can be planted on the soil"""
-    def __init__(self, plant_type, group, soil, watered):
+    def __init__(self, plant_type, group, soil, watered, remove_plant):
         """Initialize the plant"""
         super().__init__(group)
 
@@ -294,6 +314,9 @@ class Plant(pygame.sprite.Sprite):
         self.plant_type = plant_type
         # Save the soil that plant's on
         self.soil = soil
+
+        # Harvestable flag
+        self.harvestable = False
 
         # Depth position of it
         self.pos_z = settings.DEPTHS["plant"]
@@ -315,16 +338,53 @@ class Plant(pygame.sprite.Sprite):
         # Get the rectangle the plant
         self.rect = self.image.get_rect(midbottom=soil.rect.midbottom + Vector(0, self.offset_y))
 
+        # Health of a plant depending on the type
+        self.health = 1 if plant_type == "corn" else 2
+
         # Check if the soil is watered function
         self.watered = watered
+        # Remove plant function
+        self.remove_plant = remove_plant
+
+        self.damage_cooldown = Timer(1000)
 
     def grow(self):
         """Grow the plant if conditions are true"""
         # Check if plant soil was watered
         if self.watered(self.rect.center):
-            # Increase the stage of growth
-            self.stage += self.growth_speed
+            # If plant isn't yet ready for harvest
+            if not self.harvestable:
+                # Increase the stage of growth
+                self.stage += self.growth_speed
 
-            # Try to get a new image depending on the stage, and update the rectangle
-            self.image = self.frames[int(self.stage)]
-            self.rect = self.image.get_rect(midbottom=self.soil.rect.midbottom + Vector(0, self.offset_y))
+                # If plant started to grow, change its depth
+                if int(self.stage) > 0:
+                    self.pos_z = settings.DEPTHS["main"]
+                    # Set its hitboxes
+                    self.hitbox = self.rect.copy().inflate(-25, -self.rect.height * 0.4)
+
+                # If plant is already fully grown, don't grow it anymore
+                elif self.stage >= self.max_stage:
+                    self.stage = self.max_stage
+                    # Indicate that the plant is ready to harvest
+                    self.harvestable = True
+
+                # Try to get a new image depending on the stage, and update the rectangle
+                self.image = self.frames[int(self.stage)]
+                self.rect = self.image.get_rect(midbottom=self.soil.rect.midbottom + Vector(0, self.offset_y))
+
+    def check(self, player_hitbox):
+        """Update the plant"""
+        # If there isn't active cooldown
+        if not self.damage_cooldown.active:
+            # Check if player stepped on non-grown plant
+            if player_hitbox.hitbox.colliderect(self.rect):
+                # Damage the plant
+                self.health -= 1
+                # Start the damage cooldown
+                self.damage_cooldown.start()
+
+                # If plant was stepped on too much, kill it
+                if self.health == 0:
+                    self.remove_plant()
+                    self.kill()
