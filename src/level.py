@@ -1,3 +1,4 @@
+import random
 from os.path import join as path_join
 
 import pygame
@@ -42,8 +43,15 @@ class Level:
 
         # Rain weather
         self.rain = Rain(self.sprites)
+
         # Rain flag
-        self.rain_active = True
+        self.rain_active = random.randint(0, 10) > 4
+        # Update the soil's flag
+        self.soil.rain_active = self.rain_active
+
+        # Water all the existing tiles if it's raining
+        if self.rain_active:
+            self.soil.water_all()
 
         # Game's user's interface
         self.ui = UI(self.player)
@@ -93,8 +101,16 @@ class Level:
             # Create new ones
             tree.create_apples()
 
+        # Grow the plants
+        self.soil.update_plants()
+
         # Remove water from the soil
         self.soil.remove_water()
+
+        # Set the weather to raining randomly
+        self.rain_active = random.randint(0, 10) > 4
+        # Update the soil's raining flag
+        self.soil.rain_active = self.rain_active
 
     def _initialize(self):
         """Initialize and set up the entire level"""

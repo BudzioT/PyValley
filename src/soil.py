@@ -2,6 +2,7 @@ import random
 from os.path import join as path_join
 
 import pygame
+from pygame.math import Vector2 as Vector
 from pytmx.util_pygame import load_pygame
 
 from src.utilities import utilities
@@ -15,10 +16,13 @@ class Soil:
         """Initialize the soil"""
         # Get all the game's visible sprites
         self.sprites = sprites
+
         # Soil sprites
         self.soil_sprites = pygame.sprite.Group()
         # Watered soil sprites
         self.watered_soil_sprites = pygame.sprite.Group()
+        # Plant sprites
+        self.plant_sprites = pygame.sprite.Group()
 
         # Get all the surfaces
         self.surfaces = utilities.load_folder_dict("../graphics/soil/")
@@ -83,6 +87,8 @@ class Soil:
                     self._create_soil_tiles()
 
                     # If it's raining, update the tile, to be watered
+                    if self.rain_active:
+                        self.water_all()
 
     def _create_soil_tiles(self):
         """Create soil tiles in places where the player hit with a hoe"""
@@ -102,6 +108,27 @@ class Soil:
                     # Create the soil tile
                     SoilTile((pos_x, pos_y), self.surfaces[soil_type],
                              [self.sprites, self.soil_sprites])
+
+    def plant(self, seed, target):
+        """Plant the specified seed at the target position"""
+        # Search for a soil that is the target
+        for soil in self.soil_sprites.sprites():
+            if soil.rect.collidepoint(target):
+                # Get the soil's position in tiles
+                pos_x = soil.rect.x // settings.TILE_SIZE
+                pos_y = soil.rect.y // settings.TILE_SIZE
+
+                # If there isn't any plant at this tile, plant it
+                if 'P' not in self.grid[pos_y][pos_x]:
+                    # Append the plant flag to the soil
+                    self.grid[pos_y][pos_x].append('P')
+                    # Create a plant
+                    Plant(seed, [self.sprites, self.plant_sprites], soil, self._watered)
+
+    def update_plants(self):
+        """Update plant stages"""
+        for plant in self.plant_sprites:
+            plant.grow()
 
     def water(self, target):
         """Water the soil in the given position"""
@@ -136,7 +163,6 @@ class Soil:
                                   random.choice(self.water_surfaces),
                                   [self.sprites, self.watered_soil_sprites])
 
-
     def remove_water(self):
         """Remove the water from soil tiles"""
         # Go through each of soil sprite and destroy it
@@ -149,6 +175,17 @@ class Soil:
                 # If there is a watered tile, remove the water flag
                 if 'W' in cell:
                     cell.remove('W')
+
+    def _watered(self, pos):
+        """Return if the soil from the given position is watered"""
+        # Calculate position in tiles
+        pos_x = pos[0] // settings.TILE_SIZE
+        pos_y = pos[1] // settings.TILE_SIZE
+        # Get soil at this position
+        soil = self.grid[pos_y][pos_x]
+
+        # Return if the soil has a watered flag
+        return 'W' in soil
 
     def _get_soil_type(self, row_index, row, column_index):
         """Get the type of soil to place depending on the near hit farmable tiles"""
@@ -245,3 +282,49 @@ class SoilWaterTile(pygame.sprite.Sprite):
 
         # Set the depth position
         self.pos_z = settings.DEPTHS["soil_water"]
+
+
+class Plant(pygame.sprite.Sprite):
+    """Plant that can be planted on the soil"""
+    def __init__(self, plant_type, group, soil, watered):
+        """Initialize the plant"""
+        super().__init__(group)
+
+        # Save the plant type
+        self.plant_type = plant_type
+        # Save the soil that plant's on
+        self.soil = soil
+
+        # Depth position of it
+        self.pos_z = settings.DEPTHS["plant"]
+
+        # Import animation frames based off the type
+        self.frames = utilities.load_folder(f"../graphics/fruit/{plant_type}")
+
+        # Plant's growth stage
+        self.stage = 0
+        # Maximum stage (depending on the amount of frames)
+        self.max_stage = len(self.frames) - 1
+        # Its growth speed
+        self.growth_speed = settings.GROW_SPEED[plant_type]
+
+        # Plants position offset
+        self.offset_y = -15 if plant_type == "corn" else - 7
+        # Current plant's image
+        self.image = self.frames[self.stage]
+        # Get the rectangle the plant
+        self.rect = self.image.get_rect(midbottom=soil.rect.midbottom + Vector(0, self.offset_y))
+
+        # Check if the soil is watered function
+        self.watered = watered
+
+    def grow(self):
+        """Grow the plant if conditions are true"""
+        # Check if plant soil was watered
+        if self.watered(self.rect.center):
+            # Increase the stage of growth
+            self.stage += self.growth_speed
+
+            # Try to get a new image depending on the stage, and update the rectangle
+            self.image = self.frames[int(self.stage)]
+            self.rect = self.image.get_rect(midbottom=self.soil.rect.midbottom + Vector(0, self.offset_y))

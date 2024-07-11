@@ -53,6 +53,11 @@ class Settings:
             "right": Vector(50, 40)
         }
 
+        self.GROW_SPEED = {
+            "corn": 0.8,
+            "tomato": 0.6
+        }
+
 
 # Instantiate settings
 settings = Settings()

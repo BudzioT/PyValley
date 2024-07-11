@@ -135,6 +135,13 @@ class Player(pygame.sprite.Sprite):
             else:
                 self.direction.y = 0
 
+            # Use a seed on L, C or F
+            if keys[pygame.K_l] or keys[pygame.K_c] or keys[pygame.K_f]:
+                # Turn on the seed timer
+                self.timers["seed"].start()
+                # Stop the movement
+                self.direction = Vector()
+
             # When user's pressing SPACE or K or X, use a tool
             if keys[pygame.K_SPACE] or keys[pygame.K_k] or keys[pygame.K_x]:
                 # Activate the tool timer
@@ -283,7 +290,7 @@ class Player(pygame.sprite.Sprite):
 
     def _use_seed(self):
         """Use currently selected seed"""
-        pass
+        self.soil.plant(self.seed, self.target)
 
     def _change_tool(self, amount):
         """Change the tool index by the given amount"""
